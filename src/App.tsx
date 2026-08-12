@@ -1,17 +1,45 @@
+import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ProtectedAdmin } from './components/ProtectedAdmin'
 import { PublicLayout } from './layouts/PublicLayout'
-import { AdminLayout } from './layouts/AdminLayout'
 import { PublicHomePage } from './pages/public/HomePage'
 import { MenuPage } from './pages/public/MenuPage'
 import { CheckoutPage } from './pages/public/CheckoutPage'
-import { AdminLoginPage } from './pages/admin/LoginPage'
-import { MenuAdminPage } from './pages/admin/MenuAdminPage'
-import { DashboardPage } from './pages/DashboardPage'
-import { NewOrderPage } from './pages/NewOrderPage'
-import { OrdersPage } from './pages/OrdersPage'
-import { DeliveriesPage } from './pages/DeliveriesPage'
-import { CustomersPage } from './pages/CustomersPage'
+
+const AdminLayout = lazy(() =>
+  import('./layouts/AdminLayout').then((m) => ({ default: m.AdminLayout })),
+)
+const AdminLoginPage = lazy(() =>
+  import('./pages/admin/LoginPage').then((m) => ({ default: m.AdminLoginPage })),
+)
+const MenuAdminPage = lazy(() =>
+  import('./pages/admin/MenuAdminPage').then((m) => ({
+    default: m.MenuAdminPage,
+  })),
+)
+const DashboardPage = lazy(() =>
+  import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
+)
+const NewOrderPage = lazy(() =>
+  import('./pages/NewOrderPage').then((m) => ({ default: m.NewOrderPage })),
+)
+const OrdersPage = lazy(() =>
+  import('./pages/OrdersPage').then((m) => ({ default: m.OrdersPage })),
+)
+const DeliveriesPage = lazy(() =>
+  import('./pages/DeliveriesPage').then((m) => ({ default: m.DeliveriesPage })),
+)
+const CustomersPage = lazy(() =>
+  import('./pages/CustomersPage').then((m) => ({ default: m.CustomersPage })),
+)
+
+function AdminFallback() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted">
+      Cargando…
+    </div>
+  )
+}
 
 export default function App() {
   return (
@@ -22,13 +50,22 @@ export default function App() {
         <Route path="pedido" element={<CheckoutPage />} />
       </Route>
 
-      <Route path="/admin/login" element={<AdminLoginPage />} />
+      <Route
+        path="/admin/login"
+        element={
+          <Suspense fallback={<AdminFallback />}>
+            <AdminLoginPage />
+          </Suspense>
+        }
+      />
 
       <Route
         path="/admin"
         element={
           <ProtectedAdmin>
-            <AdminLayout />
+            <Suspense fallback={<AdminFallback />}>
+              <AdminLayout />
+            </Suspense>
           </ProtectedAdmin>
         }
       >

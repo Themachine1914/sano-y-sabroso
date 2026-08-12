@@ -44,7 +44,10 @@ function loadCatalog(): Dish[] {
       name: dish.name || 'Plato',
       description: dish.description || '',
       price: Number(dish.price) || 0,
-      image: dish.image || '/dishes/plato-01.jpg',
+      image: (dish.image || '/dishes/plato-01.webp').replace(
+        /\.jpg$/i,
+        '.webp',
+      ),
     }))
   } catch {
     return structuredClone(SEED_DISHES)

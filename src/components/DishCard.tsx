@@ -3,7 +3,13 @@ import type { Dish } from '../types'
 import { useCart } from '../context/CartContext'
 import { formatRD } from '../lib/whatsapp'
 
-export function DishCard({ dish }: { dish: Dish }) {
+export function DishCard({
+  dish,
+  priority = false,
+}: {
+  dish: Dish
+  priority?: boolean
+}) {
   const { getQty, addItem, setQuantity } = useCart()
   const qty = getQty(dish.id)
 
@@ -13,7 +19,11 @@ export function DishCard({ dish }: { dish: Dish }) {
         <img
           src={dish.image}
           alt={dish.name}
-          loading="lazy"
+          width={480}
+          height={600}
+          loading={priority ? 'eager' : 'lazy'}
+          decoding="async"
+          fetchPriority={priority ? 'high' : 'low'}
           className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-navy-900/35 to-transparent" />

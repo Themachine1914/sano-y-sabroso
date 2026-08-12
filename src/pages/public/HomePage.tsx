@@ -102,8 +102,8 @@ export function PublicHomePage() {
           </div>
         </div>
         <div className="grid grid-cols-2 gap-x-4 gap-y-6">
-          {featured.map((dish) => (
-            <DishCard key={dish.id} dish={dish} />
+          {featured.map((dish, index) => (
+            <DishCard key={dish.id} dish={dish} priority={index < 2} />
           ))}
         </div>
       </section>

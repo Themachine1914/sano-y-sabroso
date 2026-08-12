@@ -17,22 +17,29 @@ const px: Record<NonNullable<BrandMarkProps['size']>, number> = {
   hero: 152,
 }
 
+/** Logo liviano según tamaño de UI (evita cargar el PNG grande). */
+function logoSrc(size: NonNullable<BrandMarkProps['size']>): string {
+  if (size === 'hero' || size === 'lg') return '/brand/logo-hero.webp'
+  if (size === 'md') return '/brand/logo-md.webp'
+  return '/brand/logo-sm.webp'
+}
+
 export function BrandMark({ size = 'md', className = '' }: BrandMarkProps) {
   const s = px[size]
 
   return (
     <img
-      src="/brand/logo.png?v=4"
+      src={logoSrc(size)}
       alt="Sano & Sabroso"
       width={s}
       height={s}
       className={[
         box[size],
-        // Solo el círculo del logo (su borde propio), sin fondo blanco ni sombra
         'shrink-0 rounded-full object-contain bg-transparent',
         className,
       ].join(' ')}
       decoding="async"
+      fetchPriority={size === 'hero' ? 'high' : 'low'}
     />
   )
 }
