@@ -23,3 +23,7 @@ npm-debug.log*
 
 # Local tooling
 .tools/
+
+# Vercel
+.vercel/
+.vercel
