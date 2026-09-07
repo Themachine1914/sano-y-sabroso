@@ -14,7 +14,7 @@ import {
 } from '../lib/whatsapp'
 
 export function NewOrderPage() {
-  const { dishes } = useCatalog()
+  const { availableDishes } = useCatalog()
   const { addOrder } = useApp()
   const navigate = useNavigate()
 
@@ -26,13 +26,13 @@ export function NewOrderPage() {
   const [qty, setQty] = useState<Record<string, number>>({})
 
   const selectedItems: OrderItem[] = useMemo(() => {
-    return dishes.filter((d) => (qty[d.id] ?? 0) > 0).map((d) => ({
+    return availableDishes.filter((d) => (qty[d.id] ?? 0) > 0).map((d) => ({
       dishId: d.id,
       name: d.name,
       price: d.price,
       quantity: qty[d.id],
     }))
-  }, [qty, dishes])
+  }, [qty, availableDishes])
 
   const total = selectedItems.reduce((s, i) => s + i.price * i.quantity, 0)
   const canSubmit =
@@ -135,7 +135,7 @@ export function NewOrderPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-3">
-          {dishes.map((dish) => {
+          {availableDishes.map((dish) => {
             const count = qty[dish.id] ?? 0
             const active = count > 0
             return (

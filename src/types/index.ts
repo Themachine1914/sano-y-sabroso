@@ -12,6 +12,7 @@ export interface Dish {
   description: string
   price: number
   image: string
+  available: boolean
 }
 
 export interface OrderItem {

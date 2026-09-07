@@ -31,7 +31,7 @@ export function AdminLoginPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-10">
+    <div className="mx-auto flex min-h-full w-full max-w-lg flex-col justify-center px-6 py-10">
       <form
         onSubmit={handleSubmit}
         className="rounded-[2rem] bg-white/80 px-5 py-8 shadow-[0_20px_50px_rgba(6,41,92,0.08)] ring-1 ring-white backdrop-blur-sm"

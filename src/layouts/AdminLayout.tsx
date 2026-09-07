@@ -24,7 +24,7 @@ export function AdminLayout() {
   const navigate = useNavigate()
 
   return (
-    <div className="relative mx-auto flex min-h-dvh w-full max-w-lg flex-col">
+    <div className="relative mx-auto flex min-h-full w-full max-w-lg flex-col">
       <header className="safe-top sticky top-0 z-30 border-b border-white/60 bg-white/70 px-4 backdrop-blur-xl">
         <div className="flex h-14 items-center gap-2.5">
           <BrandMark size="sm" />

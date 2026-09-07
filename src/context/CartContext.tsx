@@ -87,14 +87,22 @@ function reducer(state: CartState, action: CartAction): CartState {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const { dishes } = useCatalog()
+  const { dishes, getDishById } = useCatalog()
   const [state, dispatch] = useReducer(reducer, initialState)
+
+  const addItem = useCallback(
+    (dishId: string, quantity?: number) => {
+      if (getDishById(dishId)?.available === false) return
+      dispatch({ type: 'ADD', dishId, quantity })
+    },
+    [getDishById],
+  )
 
   const lines = useMemo<CartLine[]>(() => {
     return Object.entries(state.items)
       .map(([dishId, quantity]) => {
         const dish = dishes.find((d) => d.id === dishId)
-        if (!dish) return null
+        if (!dish || dish.available === false) return null
         return { dish, quantity }
       })
       .filter((line): line is CartLine => line !== null)
@@ -122,7 +130,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       itemCount,
       isOpen: state.isOpen,
       getQty,
-      addItem: (dishId, quantity) => dispatch({ type: 'ADD', dishId, quantity }),
+      addItem,
       setQuantity: (dishId, quantity) =>
         dispatch({ type: 'SET_QTY', dishId, quantity }),
       removeItem: (dishId) => dispatch({ type: 'REMOVE', dishId }),
@@ -131,7 +139,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       closeCart: () => dispatch({ type: 'CLOSE' }),
       toggleCart: () => dispatch({ type: 'TOGGLE' }),
     }),
-    [lines, total, itemCount, state.isOpen, getQty],
+    [lines, total, itemCount, state.isOpen, getQty, addItem],
   )
 
   return createElement(CartContext.Provider, { value }, children)

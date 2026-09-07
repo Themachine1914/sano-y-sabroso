@@ -1,5 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { CustomizeDemo } from './components/CustomizeDemo'
+import { DemoBanner } from './components/DemoBanner'
 import { ProtectedAdmin } from './components/ProtectedAdmin'
 import { PublicLayout } from './layouts/PublicLayout'
 import { PublicHomePage } from './pages/public/HomePage'
@@ -43,6 +45,9 @@ function AdminFallback() {
 
 export default function App() {
   return (
+    <div className="flex min-h-dvh flex-col">
+      <DemoBanner />
+      <div className="relative min-h-0 flex-1">
     <Routes>
       <Route element={<PublicLayout />}>
         <Route index element={<PublicHomePage />} />
@@ -79,5 +84,8 @@ export default function App() {
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+      </div>
+      <CustomizeDemo />
+    </div>
   )
 }

@@ -3,7 +3,7 @@ import { DishCard } from '../../components/DishCard'
 import { useCart } from '../../context/CartContext'
 
 export function MenuPage() {
-  const { dishes } = useCatalog()
+  const { availableDishes } = useCatalog()
   const { itemCount } = useCart()
 
   return (
@@ -16,16 +16,22 @@ export function MenuPage() {
           Nuestro menú
         </h1>
         <p className="mt-1 text-sm text-muted">
-          {dishes.length} platos
+          {availableDishes.length} platos
           {itemCount > 0 ? ` · ${itemCount} en tu pedido` : ''}
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-x-4 gap-y-6">
-        {dishes.map((dish) => (
-          <DishCard key={dish.id} dish={dish} />
-        ))}
-      </div>
+      {availableDishes.length === 0 ? (
+        <p className="rounded-[1.5rem] bg-white/85 px-4 py-8 text-center text-sm text-muted shadow-sm ring-1 ring-white">
+          No hay platos disponibles por ahora.
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+          {availableDishes.map((dish) => (
+            <DishCard key={dish.id} dish={dish} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

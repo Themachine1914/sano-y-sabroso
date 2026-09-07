@@ -22,9 +22,11 @@ export interface DishInput {
 
 interface CatalogContextValue {
   dishes: Dish[]
+  availableDishes: Dish[]
   getDishById: (id: string) => Dish | undefined
   addDish: (input: DishInput) => Dish
   updateDish: (id: string, patch: Partial<Omit<Dish, 'id'>>) => void
+  toggleDishAvailable: (id: string) => void
   removeDish: (id: string) => void
   resetCatalog: () => void
 }
@@ -48,6 +50,7 @@ function loadCatalog(): Dish[] {
         /\.jpg$/i,
         '.webp',
       ),
+      available: dish.available !== false,
     }))
   } catch {
     return structuredClone(SEED_DISHES)
@@ -90,6 +93,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       description: input.description.trim(),
       price: input.price,
       image: input.image,
+      available: true,
     }
     setDishes((prev) => [dish, ...prev])
     return dish
@@ -104,6 +108,16 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     [],
   )
 
+  const toggleDishAvailable = useCallback((id: string) => {
+    setDishes((prev) =>
+      prev.map((dish) =>
+        dish.id === id
+          ? { ...dish, available: dish.available === false }
+          : dish,
+      ),
+    )
+  }, [])
+
   const removeDish = useCallback((id: string) => {
     setDishes((prev) => prev.filter((d) => d.id !== id))
   }, [])
@@ -114,16 +128,32 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh))
   }, [])
 
+  const availableDishes = useMemo(
+    () => dishes.filter((dish) => dish.available !== false),
+    [dishes],
+  )
+
   const value = useMemo(
     () => ({
       dishes,
+      availableDishes,
       getDishById,
       addDish,
       updateDish,
+      toggleDishAvailable,
       removeDish,
       resetCatalog,
     }),
-    [dishes, getDishById, addDish, updateDish, removeDish, resetCatalog],
+    [
+      dishes,
+      availableDishes,
+      getDishById,
+      addDish,
+      updateDish,
+      toggleDishAvailable,
+      removeDish,
+      resetCatalog,
+    ],
   )
 
   return createElement(CatalogContext.Provider, { value }, children)

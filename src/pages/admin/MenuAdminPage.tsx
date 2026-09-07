@@ -14,7 +14,14 @@ import { Button } from '../../components/Button'
 import { Field, Input, TextArea } from '../../components/Field'
 
 export function MenuAdminPage() {
-  const { dishes, addDish, updateDish, removeDish, resetCatalog } = useCatalog()
+  const {
+    dishes,
+    addDish,
+    updateDish,
+    toggleDishAvailable,
+    removeDish,
+    resetCatalog,
+  } = useCatalog()
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   const [name, setName] = useState('')
@@ -215,7 +222,10 @@ export function MenuAdminPage() {
           <h2 className="text-sm font-semibold text-navy-800">
             Platos del menú
           </h2>
-          <span className="text-xs text-muted">{dishes.length} platos</span>
+          <span className="text-xs text-muted">
+            {dishes.filter((d) => d.available !== false).length} disponibles ·{' '}
+            {dishes.length} total
+          </span>
         </div>
 
         {dishes.map((dish) => {
@@ -225,7 +235,9 @@ export function MenuAdminPage() {
           return (
             <article
               key={dish.id}
-              className="rounded-[1.5rem] bg-white/85 p-3 shadow-sm ring-1 ring-white"
+              className={`rounded-[1.5rem] bg-white/85 p-3 shadow-sm ring-1 ring-white ${
+                dish.available !== false ? '' : 'opacity-70'
+              }`}
             >
               <div className="flex gap-3">
                 <button
@@ -264,6 +276,15 @@ export function MenuAdminPage() {
                       <p className="mt-0.5 line-clamp-2 text-xs text-muted">
                         {dish.description}
                       </p>
+                      <span
+                        className={`mt-1.5 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          dish.available !== false
+                            ? 'bg-brand-100 text-brand-700'
+                            : 'bg-warm text-muted'
+                        }`}
+                      >
+                        {dish.available !== false ? 'Disponible' : 'No disponible'}
+                      </span>
                     </div>
                     {savedId === dish.id && (
                       <span className="inline-flex items-center gap-0.5 rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-700">
@@ -329,9 +350,39 @@ export function MenuAdminPage() {
                       </>
                     )}
 
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={dish.available !== false}
+                      aria-label={
+                        dish.available !== false
+                          ? `Inactivar ${dish.name}`
+                          : `Activar ${dish.name}`
+                      }
+                      onClick={() => toggleDishAvailable(dish.id)}
+                      className={`ml-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-2 text-xs font-semibold transition ${
+                        dish.available !== false
+                          ? 'bg-brand-100 text-brand-700'
+                          : 'bg-warm text-muted'
+                      }`}
+                    >
+                      <span
+                        className={`relative h-4 w-7 rounded-full transition ${
+                          dish.available !== false ? 'bg-brand-600' : 'bg-line'
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-0.5 h-3 w-3 rounded-full bg-white shadow-sm transition ${
+                            dish.available !== false ? 'left-3.5' : 'left-0.5'
+                          }`}
+                        />
+                      </span>
+                      {dish.available !== false ? 'Activo' : 'Inactivo'}
+                    </button>
+
                     <Button
                       variant="ghost"
-                      className="!min-h-0 ml-auto !px-2 !py-2 text-xs text-red-600"
+                      className="!min-h-0 !px-2 !py-2 text-xs text-red-600"
                       icon={<Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />}
                       onClick={() => {
                         if (

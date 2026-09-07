@@ -8,6 +8,7 @@ export const DISHES: Dish[] = [
     description: 'Pechuga grillada, yuca y aguacate con ajonjolí',
     price: 350,
     image: '/dishes/plato-01.webp',
+    available: true,
   },
   {
     id: 'd02',
@@ -15,6 +16,7 @@ export const DISHES: Dish[] = [
     description: 'Pollo grillado, puré, pepino, tomate y aguacate',
     price: 350,
     image: '/dishes/plato-02.webp',
+    available: true,
   },
   {
     id: 'd03',
@@ -22,6 +24,7 @@ export const DISHES: Dish[] = [
     description: 'Huevos, queso grillado, puré de auyama y aguacate',
     price: 320,
     image: '/dishes/plato-03.webp',
+    available: true,
   },
   {
     id: 'd04',
@@ -29,6 +32,7 @@ export const DISHES: Dish[] = [
     description: 'Filete de pescado, yuca, aguacate y ensalada',
     price: 380,
     image: '/dishes/plato-04.webp',
+    available: true,
   },
   {
     id: 'd05',
@@ -36,6 +40,7 @@ export const DISHES: Dish[] = [
     description: 'Chuleta, puré, ensalada de lechuga y zanahoria',
     price: 380,
     image: '/dishes/plato-05.webp',
+    available: true,
   },
   {
     id: 'd06',
@@ -43,6 +48,7 @@ export const DISHES: Dish[] = [
     description: 'Costillas a la parrilla, aguacate y ensalada fresca',
     price: 400,
     image: '/dishes/plato-06.webp',
+    available: true,
   },
   {
     id: 'd07',
@@ -50,6 +56,7 @@ export const DISHES: Dish[] = [
     description: 'Pollo asado, huevo, vegetales cocidos y aguacate',
     price: 370,
     image: '/dishes/plato-07.webp',
+    available: true,
   },
   {
     id: 'd08',
@@ -57,6 +64,7 @@ export const DISHES: Dish[] = [
     description: 'Carne molida, huevo, vegetales al vapor y puré',
     price: 350,
     image: '/dishes/plato-08.webp',
+    available: true,
   },
   {
     id: 'd09',
@@ -64,6 +72,7 @@ export const DISHES: Dish[] = [
     description: 'Chuleta, aguacate, huevo, zanahoria y yuca',
     price: 420,
     image: '/dishes/plato-09.webp',
+    available: true,
   },
   {
     id: 'd10',
@@ -71,6 +80,7 @@ export const DISHES: Dish[] = [
     description: 'Pescado grillado, arroz, aguacate y ensalada',
     price: 380,
     image: '/dishes/plato-10.webp',
+    available: true,
   },
   {
     id: 'd11',
@@ -78,6 +88,7 @@ export const DISHES: Dish[] = [
     description: 'Albóndigas, aguacate, huevo, vegetales y puré',
     price: 360,
     image: '/dishes/plato-11.webp',
+    available: true,
   },
   {
     id: 'd12',
@@ -85,6 +96,7 @@ export const DISHES: Dish[] = [
     description: 'Carne grillada, puré de auyama, queso y aguacate',
     price: 390,
     image: '/dishes/plato-12.webp',
+    available: true,
   },
 ]
 

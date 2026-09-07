@@ -7,8 +7,8 @@ import { Button } from '../../components/Button'
 import { BrandMark } from '../../components/BrandMark'
 
 export function PublicHomePage() {
-  const { dishes } = useCatalog()
-  const featured = dishes.slice(0, 4)
+  const { availableDishes } = useCatalog()
+  const featured = availableDishes.slice(0, 4)
 
   return (
     <div className="space-y-12">
@@ -101,11 +101,17 @@ export function PublicHomePage() {
             </Link>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-6">
-          {featured.map((dish, index) => (
-            <DishCard key={dish.id} dish={dish} priority={index < 2} />
-          ))}
-        </div>
+        {featured.length === 0 ? (
+          <p className="rounded-[1.5rem] bg-white/85 px-4 py-8 text-center text-sm text-muted shadow-sm ring-1 ring-white">
+            No hay platos disponibles por ahora.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+            {featured.map((dish, index) => (
+              <DishCard key={dish.id} dish={dish} priority={index < 2} />
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="relative overflow-hidden rounded-[2rem] bg-navy-800 px-5 py-9 text-center text-white shadow-lg shadow-navy-800/25">
