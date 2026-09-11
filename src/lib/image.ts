@@ -32,3 +32,20 @@ export function fileToCompressedDataUrl(
     reader.readAsDataURL(file)
   })
 }
+
+/** Sube una imagen (data URL, ya comprimida) a Supabase Storage vía /api/upload. */
+export async function uploadImage(dataUrl: string): Promise<string> {
+  const blob = await (await fetch(dataUrl)).blob()
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    headers: { 'Content-Type': blob.type || 'image/jpeg' },
+    credentials: 'include',
+    body: blob,
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error || 'No se pudo subir la imagen')
+  }
+  const data = (await res.json()) as { url: string }
+  return data.url
+}

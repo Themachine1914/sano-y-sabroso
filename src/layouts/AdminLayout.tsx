@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useAdminAuth } from '../context/AdminAuthContext'
 import { BrandMark } from '../components/BrandMark'
+import { LegacyDataMigration } from '../components/LegacyDataMigration'
 
 const tabs = [
   { to: '/admin', label: 'Inicio', icon: Home, end: true },
@@ -44,8 +45,7 @@ export function AdminLayout() {
           <button
             type="button"
             onClick={() => {
-              logout()
-              navigate('/admin/login')
+              logout().finally(() => navigate('/admin/login'))
             }}
             className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-white/80"
             aria-label="Cerrar sesión"
@@ -54,6 +54,8 @@ export function AdminLayout() {
           </button>
         </div>
       </header>
+
+      <LegacyDataMigration />
 
       <main className="relative z-10 flex-1 overflow-y-auto px-5 pt-6 pb-28">
         <Outlet />

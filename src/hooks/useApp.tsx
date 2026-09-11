@@ -8,69 +8,32 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { INITIAL_CUSTOMERS, INITIAL_ORDERS } from '../data/mock'
-import type { Customer, Order, OrderStatus } from '../types'
-
-const STORAGE_KEY = 'sano-sabroso-demo-v1'
+import type { Customer, Order, OrderStatus, PaymentMethod } from '../types'
 
 interface AppState {
   orders: Order[]
   customers: Customer[]
+  loaded: boolean
+}
+
+export interface NewOrderInput {
+  customerName: string
+  customerPhone: string
+  address: string
+  items: { dishId: string; quantity: number }[]
+  paymentMethod: PaymentMethod
+  notes: string
 }
 
 interface AppContextValue extends AppState {
-  addOrder: (order: Order) => void
-  updateOrderStatus: (orderId: string, status: OrderStatus) => void
+  addOrder: (input: NewOrderInput) => Promise<Order>
+  updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>
   readyForDelivery: Order[]
   todayOrders: Order[]
   pendingDeliveryCount: number
-  resetDemo: () => void
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
-
-function loadState(): AppState {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw) as AppState
-      if (parsed.orders?.length) return parsed
-    }
-  } catch {
-    /* ignore */
-  }
-  return { orders: INITIAL_ORDERS, customers: INITIAL_CUSTOMERS }
-}
-
-function upsertCustomer(customers: Customer[], order: Order): Customer[] {
-  const existing = customers.find(
-    (c) => c.phone.replace(/\D/g, '') === order.customerPhone.replace(/\D/g, ''),
-  )
-  if (existing) {
-    return customers.map((c) =>
-      c.id === existing.id
-        ? {
-            ...c,
-            name: order.customerName,
-            lastAddress: order.address,
-            lastOrderAt: order.createdAt,
-            orderCount: c.orderCount + 1,
-          }
-        : c,
-    )
-  }
-  return [
-    {
-      id: `c-${Date.now()}`,
-      name: order.customerName,
-      phone: order.customerPhone,
-      lastAddress: order.address,
-      lastOrderAt: order.createdAt,
-      orderCount: 1,
-    },
-    ...customers,
-  ]
-}
 
 function isToday(iso: string): boolean {
   const d = new Date(iso)
@@ -83,30 +46,79 @@ function isToday(iso: string): boolean {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AppState>(loadState)
+  const [state, setState] = useState<AppState>({ orders: [], customers: [], loaded: false })
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-  }, [state])
-
-  const addOrder = useCallback((order: Order) => {
-    setState((prev) => ({
-      orders: [order, ...prev.orders],
-      customers: upsertCustomer(prev.customers, order),
-    }))
+    let cancelled = false
+    async function load() {
+      const [ordersRes, customersRes] = await Promise.all([
+        fetch('/api/orders', { credentials: 'include' }),
+        fetch('/api/customers', { credentials: 'include' }),
+      ])
+      const orders = ordersRes.ok ? ((await ordersRes.json()) as Order[]) : []
+      const customers = customersRes.ok ? ((await customersRes.json()) as Customer[]) : []
+      if (!cancelled) setState({ orders, customers, loaded: true })
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
-  const updateOrderStatus = useCallback((orderId: string, status: OrderStatus) => {
+  const addOrder = useCallback(async (input: NewOrderInput) => {
+    const res = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    })
+    if (!res.ok) throw new Error('No se pudo crear el pedido')
+    const order = (await res.json()) as Order
+
+    setState((prev) => {
+      const phone = order.customerPhone
+      const existing = prev.customers.find((c) => c.phone === phone)
+      const customers = existing
+        ? prev.customers.map((c) =>
+            c.id === existing.id
+              ? {
+                  ...c,
+                  name: order.customerName,
+                  lastAddress: order.address,
+                  lastOrderAt: order.createdAt,
+                  orderCount: c.orderCount + 1,
+                }
+              : c,
+          )
+        : [
+            {
+              id: `pending-${order.id}`,
+              name: order.customerName,
+              phone,
+              lastAddress: order.address,
+              lastOrderAt: order.createdAt,
+              orderCount: 1,
+            },
+            ...prev.customers,
+          ]
+      return { ...prev, orders: [order, ...prev.orders], customers }
+    })
+
+    return order
+  }, [])
+
+  const updateOrderStatus = useCallback(async (orderId: string, status: OrderStatus) => {
+    const res = await fetch(`/api/orders/${orderId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+      credentials: 'include',
+    })
+    if (!res.ok) throw new Error('No se pudo actualizar el pedido')
+    const updated = (await res.json()) as Order
     setState((prev) => ({
       ...prev,
-      orders: prev.orders.map((o) => (o.id === orderId ? { ...o, status } : o)),
+      orders: prev.orders.map((o) => (o.id === orderId ? updated : o)),
     }))
-  }, [])
-
-  const resetDemo = useCallback(() => {
-    const fresh = { orders: INITIAL_ORDERS, customers: INITIAL_CUSTOMERS }
-    setState(fresh)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh))
   }, [])
 
   const todayOrders = useMemo(
@@ -138,17 +150,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       readyForDelivery,
       todayOrders,
       pendingDeliveryCount,
-      resetDemo,
     }),
-    [
-      state,
-      addOrder,
-      updateOrderStatus,
-      readyForDelivery,
-      todayOrders,
-      pendingDeliveryCount,
-      resetDemo,
-    ],
+    [state, addOrder, updateOrderStatus, readyForDelivery, todayOrders, pendingDeliveryCount],
   )
 
   return createElement(AppContext.Provider, { value }, children)

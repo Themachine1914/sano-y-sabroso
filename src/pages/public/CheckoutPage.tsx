@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Check, MapPin, MessageCircle, Minus, Plus } from 'lucide-react'
 import { useCart } from '../../context/CartContext'
 import { useApp } from '../../hooks/useApp'
-import type { Order, PaymentMethod } from '../../types'
+import type { PaymentMethod } from '../../types'
 import { Field, Input, TextArea } from '../../components/Field'
 import { Button } from '../../components/Button'
 import {
@@ -25,6 +25,8 @@ export function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('efectivo')
   const [notes, setNotes] = useState('')
   const [sent, setSent] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState('')
 
   const canSubmit =
     lines.length > 0 &&
@@ -32,46 +34,41 @@ export function CheckoutPage() {
     customerPhone.trim() &&
     address.trim()
 
-  function handleSend() {
+  async function handleSend() {
     if (!canSubmit) return
 
-    const items = lines.map(({ dish, quantity }) => ({
-      dishId: dish.id,
-      name: dish.name,
-      price: dish.price,
-      quantity,
-    }))
+    setSendError('')
+    setSending(true)
+    try {
+      const order = await addOrder({
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.replace(/\D/g, ''),
+        address: address.trim(),
+        items: lines.map(({ dish, quantity }) => ({ dishId: dish.id, quantity })),
+        paymentMethod,
+        notes: notes.trim(),
+      })
 
-    const order: Order = {
-      id: `ORD-${1043 + Math.floor(Math.random() * 80)}`,
-      customerName: customerName.trim(),
-      customerPhone: customerPhone.replace(/\D/g, ''),
-      address: address.trim(),
-      items,
-      paymentMethod,
-      notes: notes.trim(),
-      status: 'pendiente',
-      createdAt: new Date().toISOString(),
-      total,
+      openWhatsApp(
+        buildCustomerOrderMessage({
+          customerName: order.customerName,
+          customerPhone: order.customerPhone,
+          address: order.address,
+          items: order.items,
+          paymentMethod: order.paymentMethod,
+          notes: order.notes,
+          total: order.total,
+        }),
+        BUSINESS.whatsapp,
+      )
+
+      clearCart()
+      setSent(true)
+    } catch {
+      setSendError('No se pudo enviar el pedido. Intenta de nuevo.')
+    } finally {
+      setSending(false)
     }
-
-    addOrder(order)
-
-    openWhatsApp(
-      buildCustomerOrderMessage({
-        customerName: order.customerName,
-        customerPhone: order.customerPhone,
-        address: order.address,
-        items: order.items,
-        paymentMethod: order.paymentMethod,
-        notes: order.notes,
-        total: order.total,
-      }),
-      BUSINESS.whatsapp,
-    )
-
-    clearCart()
-    setSent(true)
   }
 
   if (sent) {
@@ -252,14 +249,17 @@ export function CheckoutPage() {
             {formatRD(total)}
           </span>
         </div>
+        {sendError && (
+          <p className="mb-2 text-center text-xs font-medium text-red-600">{sendError}</p>
+        )}
         <Button
           variant="whatsapp"
           fullWidth
-          disabled={!canSubmit}
+          disabled={!canSubmit || sending}
           icon={<MessageCircle className="h-5 w-5" />}
           onClick={handleSend}
         >
-          Enviar pedido por WhatsApp
+          {sending ? 'Enviando…' : 'Enviar pedido por WhatsApp'}
         </Button>
       </div>
     </div>

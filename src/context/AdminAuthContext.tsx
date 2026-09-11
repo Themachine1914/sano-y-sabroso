@@ -3,44 +3,60 @@ import {
   createElement,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from 'react'
-import { BUSINESS } from '../config/business'
-
-const AUTH_KEY = 'sano-sabroso-admin-auth'
 
 interface AdminAuthValue {
   isAuthenticated: boolean
-  login: (pin: string) => boolean
-  logout: () => void
+  isLoading: boolean
+  login: (pin: string) => Promise<boolean>
+  logout: () => Promise<void>
 }
 
 const AdminAuthContext = createContext<AdminAuthValue | null>(null)
 
 export function AdminAuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    () => sessionStorage.getItem(AUTH_KEY) === '1',
-  )
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const login = useCallback((pin: string) => {
-    if (pin.trim() === BUSINESS.adminPin) {
-      sessionStorage.setItem(AUTH_KEY, '1')
-      setIsAuthenticated(true)
-      return true
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/admin/session', { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : { isAuthenticated: false }))
+      .then((data) => {
+        if (!cancelled) setIsAuthenticated(Boolean(data.isAuthenticated))
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+    return () => {
+      cancelled = true
     }
-    return false
   }, [])
 
-  const logout = useCallback(() => {
-    sessionStorage.removeItem(AUTH_KEY)
+  const login = useCallback(async (pin: string) => {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ pin }),
+    })
+    const ok = res.ok
+    setIsAuthenticated(ok)
+    return ok
+  }, [])
+
+  const logout = useCallback(async () => {
+    await fetch('/api/admin/logout', { method: 'POST', credentials: 'include' })
     setIsAuthenticated(false)
   }, [])
 
   const value = useMemo(
-    () => ({ isAuthenticated, login, logout }),
-    [isAuthenticated, login, logout],
+    () => ({ isAuthenticated, isLoading, login, logout }),
+    [isAuthenticated, isLoading, login, logout],
   )
 
   return createElement(AdminAuthContext.Provider, { value }, children)

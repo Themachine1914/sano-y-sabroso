@@ -118,7 +118,11 @@ export function OrdersPage() {
                       variant="secondary"
                       fullWidth
                       icon={<ChevronRight className="h-4 w-4" />}
-                      onClick={() => updateOrderStatus(order.id, next)}
+                      onClick={() => {
+                        updateOrderStatus(order.id, next).catch(() =>
+                          window.alert('No se pudo actualizar el pedido.'),
+                        )
+                      }}
                     >
                       Pasar a: {ORDER_STATUS_LABELS[next]}
                     </Button>

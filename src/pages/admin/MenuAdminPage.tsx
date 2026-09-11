@@ -1,62 +1,58 @@
 import { useRef, useState, type FormEvent } from 'react'
-import {
-  Check,
-  ImagePlus,
-  Plus,
-  RotateCcw,
-  Trash2,
-  Upload,
-} from 'lucide-react'
+import { Check, ImagePlus, Plus, Trash2, Upload } from 'lucide-react'
 import { useCatalog } from '../../context/CatalogContext'
-import { fileToCompressedDataUrl } from '../../lib/image'
+import { fileToCompressedDataUrl, uploadImage } from '../../lib/image'
 import { formatRD } from '../../lib/whatsapp'
 import { Button } from '../../components/Button'
 import { Field, Input, TextArea } from '../../components/Field'
 
 export function MenuAdminPage() {
-  const {
-    dishes,
-    addDish,
-    updateDish,
-    toggleDishAvailable,
-    removeDish,
-    resetCatalog,
-  } = useCatalog()
+  const { dishes, addDish, updateDish, toggleDishAvailable, removeDish } = useCatalog()
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
   const [image, setImage] = useState('')
+  const [uploadingNew, setUploadingNew] = useState(false)
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
   const [editingPrice, setEditingPrice] = useState<Record<string, string>>({})
   const [savedId, setSavedId] = useState<string | null>(null)
+  const [replacingId, setReplacingId] = useState<string | null>(null)
 
   async function handleNewImage(files: FileList | null) {
     if (!files?.[0]) return
     setFormError('')
+    setUploadingNew(true)
     try {
       const dataUrl = await fileToCompressedDataUrl(files[0])
-      setImage(dataUrl)
+      const url = await uploadImage(dataUrl)
+      setImage(url)
     } catch {
-      setFormError('No se pudo procesar la foto.')
+      setFormError('No se pudo subir la foto.')
+    } finally {
+      setUploadingNew(false)
     }
   }
 
   async function handleReplaceImage(dishId: string, files: FileList | null) {
     if (!files?.[0]) return
+    setReplacingId(dishId)
     try {
       const dataUrl = await fileToCompressedDataUrl(files[0])
-      updateDish(dishId, { image: dataUrl })
+      const url = await uploadImage(dataUrl)
+      await updateDish(dishId, { image: url })
       setSavedId(dishId)
       window.setTimeout(() => setSavedId(null), 1500)
     } catch {
       window.alert('No se pudo actualizar la foto.')
+    } finally {
+      setReplacingId(null)
     }
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setFormError('')
     const priceNum = Number(price)
@@ -75,7 +71,7 @@ export function MenuAdminPage() {
 
     setSaving(true)
     try {
-      addDish({
+      await addDish({
         name: name.trim(),
         description: description.trim(),
         price: priceNum,
@@ -85,12 +81,14 @@ export function MenuAdminPage() {
       setDescription('')
       setPrice('')
       setImage('')
+    } catch {
+      setFormError('No se pudo guardar el plato.')
     } finally {
       setSaving(false)
     }
   }
 
-  function savePrice(dishId: string) {
+  async function savePrice(dishId: string) {
     const raw = editingPrice[dishId]
     if (raw === undefined) return
     const value = Number(raw)
@@ -98,46 +96,30 @@ export function MenuAdminPage() {
       window.alert('Precio inválido')
       return
     }
-    updateDish(dishId, { price: value })
-    setEditingPrice((prev) => {
-      const next = { ...prev }
-      delete next[dishId]
-      return next
-    })
-    setSavedId(dishId)
-    window.setTimeout(() => setSavedId(null), 1500)
+    try {
+      await updateDish(dishId, { price: value })
+      setEditingPrice((prev) => {
+        const next = { ...prev }
+        delete next[dishId]
+        return next
+      })
+      setSavedId(dishId)
+      window.setTimeout(() => setSavedId(null), 1500)
+    } catch {
+      window.alert('No se pudo actualizar el precio.')
+    }
   }
 
   return (
     <div className="space-y-8">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-semibold tracking-[0.16em] text-brand-600 uppercase">
-            Catálogo
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-navy-800">
-            Menú y precios
-          </h1>
-          <p className="mt-1 text-sm text-muted">
-            Sube fotos y actualiza precios. Se guarda en este navegador.
-          </p>
-        </div>
-        <Button
-          variant="ghost"
-          className="!min-h-0 shrink-0 !px-3 !py-2 text-xs"
-          icon={<RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} />}
-          onClick={() => {
-            if (
-              window.confirm(
-                '¿Restaurar el menú demo original? Se perderán fotos y precios editados.',
-              )
-            ) {
-              resetCatalog()
-            }
-          }}
-        >
-          Restaurar
-        </Button>
+      <div>
+        <p className="text-[11px] font-semibold tracking-[0.16em] text-brand-600 uppercase">
+          Catálogo
+        </p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-navy-800">
+          Menú y precios
+        </h1>
+        <p className="mt-1 text-sm text-muted">Sube fotos y actualiza precios.</p>
       </div>
 
       <form
@@ -186,7 +168,7 @@ export function MenuAdminPage() {
           <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-warm px-4 py-7 text-center transition hover:border-brand-400">
             <ImagePlus className="h-6 w-6 text-muted" strokeWidth={1.75} />
             <span className="mt-2 text-sm font-medium text-navy-800">
-              Subir foto del plato
+              {uploadingNew ? 'Subiendo…' : 'Subir foto del plato'}
             </span>
             <span className="mt-1 text-xs text-muted">
               Se comprime automáticamente
@@ -195,6 +177,7 @@ export function MenuAdminPage() {
               type="file"
               accept="image/*"
               className="hidden"
+              disabled={uploadingNew}
               onChange={(e) => handleNewImage(e.target.files)}
             />
           </label>
@@ -211,7 +194,7 @@ export function MenuAdminPage() {
           <p className="text-xs font-medium text-red-600">{formError}</p>
         )}
 
-        <Button type="submit" variant="accent" fullWidth disabled={saving}>
+        <Button type="submit" variant="accent" fullWidth disabled={saving || uploadingNew}>
           <Plus className="h-4 w-4" strokeWidth={1.75} />
           {saving ? 'Guardando…' : 'Publicar plato'}
         </Button>
@@ -252,7 +235,7 @@ export function MenuAdminPage() {
                     className="h-full w-full object-cover"
                   />
                   <span className="absolute inset-x-0 bottom-0 bg-navy-900/55 py-1 text-center text-[9px] font-semibold text-white">
-                    Cambiar foto
+                    {replacingId === dish.id ? 'Subiendo…' : 'Cambiar foto'}
                   </span>
                   <input
                     ref={(el) => {
@@ -261,6 +244,7 @@ export function MenuAdminPage() {
                     type="file"
                     accept="image/*"
                     className="hidden"
+                    disabled={replacingId === dish.id}
                     onChange={(e) =>
                       handleReplaceImage(dish.id, e.target.files)
                     }
@@ -359,7 +343,11 @@ export function MenuAdminPage() {
                           ? `Inactivar ${dish.name}`
                           : `Activar ${dish.name}`
                       }
-                      onClick={() => toggleDishAvailable(dish.id)}
+                      onClick={() =>
+                        toggleDishAvailable(dish.id).catch(() =>
+                          window.alert('No se pudo actualizar la disponibilidad.'),
+                        )
+                      }
                       className={`ml-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-2 text-xs font-semibold transition ${
                         dish.available !== false
                           ? 'bg-brand-100 text-brand-700'
@@ -390,7 +378,9 @@ export function MenuAdminPage() {
                             `¿Eliminar "${dish.name}" del menú?`,
                           )
                         ) {
-                          removeDish(dish.id)
+                          removeDish(dish.id).catch(() =>
+                            window.alert('No se pudo eliminar el plato.'),
+                          )
                         }
                       }}
                     >

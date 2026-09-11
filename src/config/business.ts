@@ -8,6 +8,4 @@ export const BUSINESS = {
   country: 'República Dominicana',
   deliveryNote: 'Delivery incluido',
   tagline: 'Healthy and tasty',
-  /** PIN del panel del dueño (demo) */
-  adminPin: '2026',
 } as const

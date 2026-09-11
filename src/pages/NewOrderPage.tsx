@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Check, MapPin, MessageCircle, Minus, Plus } from 'lucide-react'
 import { useCatalog } from '../context/CatalogContext'
 import { useApp } from '../hooks/useApp'
-import type { Order, OrderItem, PaymentMethod } from '../types'
+import type { OrderItem, PaymentMethod } from '../types'
 import { Field, Input, TextArea } from '../components/Field'
 import { Button } from '../components/Button'
 import {
@@ -24,6 +24,8 @@ export function NewOrderPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('efectivo')
   const [notes, setNotes] = useState('')
   const [qty, setQty] = useState<Record<string, number>>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   const selectedItems: OrderItem[] = useMemo(() => {
     return availableDishes.filter((d) => (qty[d.id] ?? 0) > 0).map((d) => ({
@@ -52,25 +54,27 @@ export function NewOrderPage() {
     })
   }
 
-  function handleCreate() {
+  async function handleCreate() {
     if (!canSubmit) return
 
-    const order: Order = {
-      id: `ORD-${1043 + Math.floor(Math.random() * 50)}`,
-      customerName: customerName.trim(),
-      customerPhone: customerPhone.replace(/\D/g, ''),
-      address: address.trim(),
-      items: selectedItems,
-      paymentMethod,
-      notes: notes.trim(),
-      status: 'pendiente',
-      createdAt: new Date().toISOString(),
-      total,
+    setSubmitError('')
+    setSubmitting(true)
+    try {
+      const order = await addOrder({
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.replace(/\D/g, ''),
+        address: address.trim(),
+        items: selectedItems.map((i) => ({ dishId: i.dishId, quantity: i.quantity })),
+        paymentMethod,
+        notes: notes.trim(),
+      })
+      openWhatsApp(buildOrderCreatedMessage(order), order.customerPhone)
+      navigate('/admin/pedidos')
+    } catch {
+      setSubmitError('No se pudo crear el pedido. Intenta de nuevo.')
+    } finally {
+      setSubmitting(false)
     }
-
-    addOrder(order)
-    openWhatsApp(buildOrderCreatedMessage(order), order.customerPhone)
-    navigate('/admin/pedidos')
   }
 
   return (
@@ -252,14 +256,19 @@ export function NewOrderPage() {
               {formatRD(total)}
             </span>
           </div>
+          {submitError && (
+            <p className="mb-2 text-center text-xs font-medium text-red-600">
+              {submitError}
+            </p>
+          )}
           <Button
             variant="whatsapp"
             fullWidth
-            disabled={!canSubmit}
+            disabled={!canSubmit || submitting}
             icon={<MessageCircle className="h-5 w-5" />}
             onClick={handleCreate}
           >
-            Crear Pedido + Enviar por WhatsApp
+            {submitting ? 'Creando…' : 'Crear Pedido + Enviar por WhatsApp'}
           </Button>
         </div>
       </div>

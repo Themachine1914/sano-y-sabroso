@@ -16,18 +16,28 @@ export function AdminLoginPage() {
 
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   if (isAuthenticated) {
     return <Navigate to="/admin" replace />
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (login(pin)) {
-      navigate(from, { replace: true })
-      return
+    setSubmitting(true)
+    setError('')
+    try {
+      const ok = await login(pin)
+      if (ok) {
+        navigate(from, { replace: true })
+        return
+      }
+      setError('PIN incorrecto')
+    } catch {
+      setError('No se pudo verificar el PIN. Intenta de nuevo.')
+    } finally {
+      setSubmitting(false)
     }
-    setError('PIN incorrecto')
   }
 
   return (
@@ -50,7 +60,7 @@ export function AdminLoginPage() {
         </div>
 
         <div className="mt-8">
-          <Field label="PIN de acceso" hint={`Demo: ${BUSINESS.adminPin}`}>
+          <Field label="PIN de acceso">
             <Input
               type="password"
               inputMode="numeric"
@@ -65,8 +75,14 @@ export function AdminLoginPage() {
           )}
         </div>
 
-        <Button type="submit" variant="primary" fullWidth className="mt-5">
-          Entrar
+        <Button
+          type="submit"
+          variant="primary"
+          fullWidth
+          className="mt-5"
+          disabled={submitting}
+        >
+          {submitting ? 'Verificando…' : 'Entrar'}
         </Button>
 
         <Link

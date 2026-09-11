@@ -5,24 +5,16 @@ import {
   ClipboardList,
   Instagram,
   PlusCircle,
-  RefreshCw,
   ShoppingBag,
   UtensilsCrossed,
 } from 'lucide-react'
 import { useApp } from '../hooks/useApp'
-import { BUSINESS } from '../data/mock'
+import { BUSINESS } from '../config/business'
 import { formatRD, formatTime } from '../lib/whatsapp'
 import { StatusBadge } from '../components/StatusBadge'
-import { Button } from '../components/Button'
 
 export function DashboardPage() {
-  const {
-    todayOrders,
-    pendingDeliveryCount,
-    readyForDelivery,
-    orders,
-    resetDemo,
-  } = useApp()
+  const { todayOrders, pendingDeliveryCount, readyForDelivery, orders } = useApp()
 
   const deliveredToday = todayOrders.filter((o) => o.status === 'entregado').length
   const revenueToday = todayOrders.reduce((sum, o) => sum + o.total, 0)
@@ -144,14 +136,6 @@ export function DashboardPage() {
           <Instagram className="h-3.5 w-3.5" strokeWidth={1.75} />
           {BUSINESS.instagramHandle}
         </a>
-        <Button
-          variant="ghost"
-          className="!min-h-0 !px-3 !py-1.5 text-xs"
-          icon={<RefreshCw className="h-3.5 w-3.5" strokeWidth={1.75} />}
-          onClick={resetDemo}
-        >
-          Reiniciar demo
-        </Button>
       </section>
     </div>
   )
