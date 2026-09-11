@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getSupabase } from '../../_lib/supabase'
-import { requireAdmin } from '../../_lib/auth'
+import { getSupabase } from '../../_lib/supabase.js'
+import { requireAdmin } from '../../_lib/auth.js'
 
 const VALID_STATUSES = ['pendiente', 'en_preparacion', 'listo_entrega', 'entregado']
 
